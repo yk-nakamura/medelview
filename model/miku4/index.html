@@ -1,0 +1,80 @@
+<html>
+<meta charset="utf-8">
+<body>
+<script src="three.min.js"></script>
+<script src="TrackballControls.js"></script>
+<script>
+
+init();
+
+
+function init() {
+    scene = new THREE.Scene();
+  
+    clock = new THREE.Clock();
+    camera = new THREE.PerspectiveCamera( 75, 640/480);
+    camera.position.z = 150;
+	camera.position.y = 50;
+    scene.add( camera );
+     
+    trackball = new THREE.TrackballControls( camera );//カメラぐりぐりしたいならこれと・・・
+     
+    //ライティング
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.25 ); //平行光源（色、強度）
+    directionalLight.position.set(0,0,250);
+    scene.add( directionalLight );
+	scene.add(new THREE.AmbientLight(0xffffff)); //環境光
+     
+    //オブジェクト
+    loader = new THREE.JSONLoader();
+    loader.load( 'miku.json', function ( geometry, materials ) { //第１引数はジオメトリー、第２引数はマテリアルが自動的に取得）
+	    materials.forEach(function(mat) {
+            mat.skinning = true;
+        });
+        var faceMaterial = new THREE.MeshFaceMaterial( materials );
+        json = new THREE.SkinnedMesh( geometry, faceMaterial );
+        json.position.set( 0, -350, -200);
+        json.scale.set( 120, 120, 120 );
+		json.overdraw = true;
+		scene.add( json );
+
+        if (json.geometry.animations) {
+		    THREE.AnimationHandler.add( json.geometry.animations[ 0 ] );
+		    var action = new THREE.Animation(json,
+			    json.geometry.animations[ 0 ].name,
+				THREE.AnimationHandler.CATMULLROM);
+			setTimeout(function() {
+			  action.play();
+			  document.getElementById("audio").play();
+			  animate();
+			  }, 300);
+			animation_length = json.geometry.animations[ 0 ].length;
+		}
+		
+		
+    });
+     
+    //レンダラー
+    renderer = new THREE.WebGLRenderer();//THREE.CanvasRenderer();でもいいけどポリゴンの裏が非表示？
+    renderer.setSize( 960, 720 );
+    document.body.appendChild( renderer.domElement );
+  
+}
+
+var animateCurrnetTime = 0;
+function animate() {
+    requestAnimationFrame( animate );
+	var delta = clock.getDelta();
+	animateCurrnetTime += delta;
+	THREE.AnimationHandler.update(delta);
+    renderer.render( scene, camera );
+    trackball.update();   //これ追加
+	if (animateCurrnetTime >= animation_length) {
+		animateCurrnetTime = 0;
+		document.getElementById("audio").currentTime = 0;
+	}
+}
+</script>
+<audio id="audio" src="gobas.m4a"></audio>
+</body>
+</html>

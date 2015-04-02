@@ -1,0 +1,70 @@
+<html>
+<meta charset="utf-8">
+<body>
+<script src="three.min.js"></script>
+<script src="ColladaLoader.js"></script>
+<script src="TrackballControls.js"></script>
+<script>
+
+init();
+
+
+function init() {
+    scene = new THREE.Scene();
+  
+    clock = new THREE.Clock();
+    camera = new THREE.PerspectiveCamera( 75, 640/480);
+    camera.position.z = 250;
+	camera.position.y = 0;
+    scene.add( camera );
+     
+    trackball = new THREE.TrackballControls( camera );//カメラぐりぐりしたいならこれと・・・
+     
+    //ライティング
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.05 ); //平行光源（色、強度）
+    directionalLight.position.set(0,0,250);
+    scene.add( directionalLight );
+	scene.add(new THREE.AmbientLight(0x555555)); //環境光
+     
+    //オブジェクト
+    loader = new THREE.ColladaLoader();
+	loader.options.convertUpAxis = true;
+    loader.load( 'bally.dae', function ( collada ) { 
+	    dae = collada.scene;
+
+		dae.traverse( function ( child ) {
+
+			if ( child instanceof THREE.SkinnedMesh ) {
+
+				var animation = new THREE.Animation( child, child.geometry.animation );
+				animation.play();
+
+			}
+
+		} );
+
+		dae.scale.x = dae.scale.y = dae.scale.z = 50;
+		dae.position.y = -70;
+		dae.updateMatrix();
+		scene.add( dae );
+		
+		animate();
+    });
+     
+    //レンダラー
+    renderer = new THREE.WebGLRenderer();//THREE.CanvasRenderer();でもいいけどポリゴンの裏が非表示？
+    renderer.setSize( 960, 720 );
+    document.body.appendChild( renderer.domElement );
+  
+}
+  
+function animate() {
+    requestAnimationFrame( animate );
+	var delta = clock.getDelta();
+	THREE.AnimationHandler.update(delta);
+    renderer.render( scene, camera );
+    trackball.update();   //これ追加
+}
+</script>
+</body>
+</html>
