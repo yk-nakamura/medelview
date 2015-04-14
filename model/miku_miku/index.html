@@ -78,7 +78,9 @@ function init() {
     loader2 = new THREE.ImageLoader();
     loader2.load( 'forest.jpg', function (image) {
       tex = new THREE.ImageUtils.loadTexture(image.src);
-      //モデルを考慮して空間半径を決めないといけない→モデル側を変えるといい。
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      //球体半径は固定でモデル側でサイズを調整する。
       var sphereGeometry = new THREE.SphereGeometry( 100, segmentNumber, segmentNumber);
       var matrix = new THREE.Matrix4().makeScale(1, 1, -1);
       sphereGeometry.applyMatrix(matrix);
