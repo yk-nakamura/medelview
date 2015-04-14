@@ -31,11 +31,17 @@ function init() {
 
      
     //ライティング
-    var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 ); //平行光源（色、強度）
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.75 ); //平行光源（色、強度）
     directionalLight.position.set(0,0,-300);
     scene.add( directionalLight );
     directionalLight = new THREE.DirectionalLight( 0xffffff, 0.25 ); //逆からの光も少し
     directionalLight.position.set(0,0,300);
+	scene.add( directionalLight );
+	directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 ); //影落とし用
+    directionalLight.position.set(0,200,-300);
+	directionalLight.castShadow = true;
+	directionalLight.shadowMapWidth = 2048;
+	directionalLight.shadowMapHeight = 2048;
     scene.add( directionalLight );
     scene.add(new THREE.AmbientLight(0xaaaaaa)); //環境光
      
@@ -47,9 +53,10 @@ function init() {
         });
         var faceMaterial = new THREE.MeshFaceMaterial( materials );
         json = new THREE.SkinnedMesh( geometry, faceMaterial );
-        json.position.set( 0, -90, 0);
+        json.position.set( 0, -95, 0);
         json.scale.set( 27, 27, 27 );
 		json.overdraw = true;
+		json.castShadow = true;
 		scene.add( json );
 
         if (json.geometry.animations) {
@@ -77,12 +84,14 @@ function init() {
       sphereGeometry.applyMatrix(matrix);
       sphereGeometry.applyMatrix(new THREE.Matrix4().makeRotationY(90 * Math.PI/180.0));
       var mesh = new THREE.Mesh(sphereGeometry , new THREE.MeshBasicMaterial( { map: tex, overdraw: true} ) );
+	  mesh.receiveShadow = true;
       scene.add( mesh );
     });
 
     //レンダラー
     renderer = new THREE.WebGLRenderer();//THREE.CanvasRenderer();でもいいけどポリゴンの裏が非表示？
     renderer.setSize( width, height );
+	renderer.shadowMapEnabled = true;
     document.body.appendChild( renderer.domElement );
   
     //マウスコントローラ
