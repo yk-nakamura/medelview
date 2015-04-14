@@ -1,29 +1,43 @@
 <html>
 <meta charset="utf-8">
+	<style>
+		html, body { height:100%; overflow:hidden; }
+		body { margin:0; }
+		#snapshot { position: absolute; top: 0px; left: 0px; }
+	</style>
 <body>
+<script src="jquery.min.js"></script>
 <script src="three.min.js"></script>
 <script src="OrbitControls.js"></script>
 <script>
 
 init();
 
-
+var camZ = 0;
+var camZ_max = 1000;
+var camZ_min = 100;
+var segmentNumber = 60;
 function init() {
     scene = new THREE.Scene();
   
     clock = new THREE.Clock();
-    camera = new THREE.PerspectiveCamera( 75, 640/480);
-    camera.position.z = 300;
-    camera.position.y = 0;
+	var width = $(window).width();
+    var height = $(window).height();
+
+    // カメラ
+    camera = new THREE.PerspectiveCamera( 75, width / height);
+    camera.position.z = 100;
     scene.add( camera );
-     
+
      
     //ライティング
-    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 ); //平行光源（色、強度）
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 ); //平行光源（色、強度）
+    directionalLight.position.set(0,0,-300);
+    scene.add( directionalLight );
+    directionalLight = new THREE.DirectionalLight( 0xffffff, 0.25 ); //逆からの光も少し
     directionalLight.position.set(0,0,300);
     scene.add( directionalLight );
-	scene.add(new THREE.AmbientLight(0xffffff)); //環境光
-	scene.add(new THREE.AmbientLight(0x444444));
+    scene.add(new THREE.AmbientLight(0xaaaaaa)); //環境光
      
     //オブジェクト
     loader = new THREE.JSONLoader();
@@ -33,8 +47,8 @@ function init() {
         });
         var faceMaterial = new THREE.MeshFaceMaterial( materials );
         json = new THREE.SkinnedMesh( geometry, faceMaterial );
-        json.position.set( 0, -170, 0);
-        json.scale.set( 50, 50, 50 );
+        json.position.set( 0, -90, 0);
+        json.scale.set( 27, 27, 27 );
 		json.overdraw = true;
 		scene.add( json );
 
@@ -45,7 +59,8 @@ function init() {
 				THREE.AnimationHandler.CATMULLROM);
 			setTimeout(function() {
 			  action.play();
-			  //document.getElementById("audio").play();
+			  $("#audio").get(0).play();
+			  animateCurrnetTime = 0;
 			  animate();
 			  }, 300);
 			animation_length = json.geometry.animations[ 0 ].length;
@@ -56,8 +71,8 @@ function init() {
     loader2 = new THREE.ImageLoader();
     loader2.load( 'forest.jpg', function (image) {
       tex = new THREE.ImageUtils.loadTexture(image.src);
-      //モデルを考慮して空間半径を決めないといけない
-      var sphereGeometry = new THREE.SphereGeometry( 300, 60, 60);
+      //モデルを考慮して空間半径を決めないといけない→モデル側を変えるといい。
+      var sphereGeometry = new THREE.SphereGeometry( 100, segmentNumber, segmentNumber);
       var matrix = new THREE.Matrix4().makeScale(1, 1, -1);
       sphereGeometry.applyMatrix(matrix);
       sphereGeometry.applyMatrix(new THREE.Matrix4().makeRotationY(90 * Math.PI/180.0));
@@ -67,7 +82,7 @@ function init() {
 
     //レンダラー
     renderer = new THREE.WebGLRenderer();//THREE.CanvasRenderer();でもいいけどポリゴンの裏が非表示？
-    renderer.setSize( 960, 720 );
+    renderer.setSize( width, height );
     document.body.appendChild( renderer.domElement );
   
     //マウスコントローラ
@@ -87,14 +102,6 @@ function animate() {
 		animateCurrnetTime = 0;
 		document.getElementById("audio").currentTime = 0;
 	}
-}
-function wait (msec){
-    var time1 = new Date().getTime();
-    var time2 = new Date().getTime();
-  
-    while ((time2 -  time1)<msec){
-        time2 = new Date().getTime();
-    }
 }
 </script>
 <audio id="audio" src="gobas.m4a"></audio>
