@@ -25,6 +25,7 @@ var SceneParams = function() {
   this.lightX = 0;
   this.lightY = 0;
   this.lightZ = 300;
+  this.lightColor = "#ffffff";
   this.lightCastShadow = false;
   this.lightShadowDarkness = 0.1;
   // Light2
@@ -32,6 +33,7 @@ var SceneParams = function() {
   this.light2X = 0;
   this.light2Y = 0;
   this.light2Z = -300;
+  this.light2Color = "#ffffff";
   this.light2CastShadow = false;
   this.light2ShadowDarkness = 0.1;
   // Light3
@@ -39,16 +41,37 @@ var SceneParams = function() {
   this.light3X = -5;
   this.light3Y = 150;
   this.light3Z = 200;
+  this.light3Color = "#ffffff";
   this.light3CastShadow = true;
   this.light3ShadowDarkness = 0.5;
   // AmbientLight
-  this.ambientLight = 0.75;
+  this.ambientLightColor = "#aaaaaa";
+  // Object
+  this.objectX = 8.0;
+  this.objectY = -97.0;
+  this.objectZ = -8.0;
+  this.objectScale = 28.0;
+  // Sphere
+  this.sphereRotation = 0;
+  // Operation
+  this.stop = function () {
+    action.stop();
+    animateCurrnetTime = 0;
+    $audio.get(0).pause();
+  };
+  this.start = function () {
+    action.stop();
+    animateCurrnetTime = 0;
+    $audio.get(0).load();
+    action.play();
+    $audio.get(0).play();
+  };
 };
 
 var camZ = 0;
 var camZ_max = 1000;
 var camZ_min = 100;
-var segmentNumber = 60
+var segmentNumber = 60;
 function init() {
 	// 各種パラメータ変更GUI
 	var sp = new SceneParams();
@@ -63,6 +86,10 @@ function init() {
 	l1p.add(sp, 'lightX').min(-300).max(300).step(0.5).onChange(function(value){ light.position.x = value; });
 	l1p.add(sp, 'lightY').min(-300).max(300).step(0.5).onChange(function(value){ light.position.y = value; });
 	l1p.add(sp, 'lightZ').min(-300).max(300).step(0.5).onChange(function(value){ light.position.z = value; });
+	l1p.addColor(sp, 'lightColor').onChange(function(value){
+            value=value.replace( '#','0x' );
+            light.color.setHex(value);
+        });
 	l1p.add(sp, 'lightCastShadow').onChange(function(value){ light.castShadow = value; });
 	l1p.add(sp, 'lightShadowDarkness').onChange(function(value){ light.shadowDarkness = value; });
 	var l2p = gui.addFolder('Light2');
@@ -70,6 +97,10 @@ function init() {
 	l2p.add(sp, 'light2X').min(-300).max(300).step(0.5).onChange(function(value){ light2.position.x = value; });
 	l2p.add(sp, 'light2Y').min(-300).max(300).step(0.5).onChange(function(value){ light2.position.y = value; });
 	l2p.add(sp, 'light2Z').min(-300).max(300).step(0.5).onChange(function(value){ light2.position.z = value; });
+	l2p.addColor(sp, 'light2Color').onChange(function(value){
+            value=value.replace( '#','0x' );
+            light2.color.setHex(value);
+        });
 	l2p.add(sp, 'light2CastShadow').onChange(function(value){ light2.castShadow = value; });
 	l2p.add(sp, 'light2ShadowDarkness').onChange(function(value){ light2.shadowDarkness = value; });
 	var l3p = gui.addFolder('Light3');
@@ -77,10 +108,30 @@ function init() {
 	l3p.add(sp, 'light3X').min(-300).max(300).step(0.5).onChange(function(value){ light3.position.x = value; });
 	l3p.add(sp, 'light3Y').min(-300).max(300).step(0.5).onChange(function(value){ light3.position.y = value; });
 	l3p.add(sp, 'light3Z').min(-300).max(300).step(0.5).onChange(function(value){ light3.position.z = value; });
+	l3p.addColor(sp, 'light3Color').onChange(function(value){
+            value=value.replace( '#','0x' );
+            light3.color.setHex(value);
+        });
 	l3p.add(sp, 'light3CastShadow').onChange(function(value){ light3.castShadow = value; });
 	l3p.add(sp, 'light3ShadowDarkness').onChange(function(value){ light3.shadowDarkness = value; });
-	//var alp = gui.addFolder('AmbientLight');
-	//alp.add(sp, 'ambientLight').onChange(function(value){ ambientLight.color.multiplyScalar = value; });
+	var alp = gui.addFolder('AmbientLight');
+	alp.addColor(sp, 'ambientLightColor').onChange(function(value){
+            value=value.replace( '#','0x' );
+            ambientLight.color.setHex(value);
+        });
+        var ob = gui.addFolder('Object');
+	ob.add(sp, 'objectX').min(-300).max(300).onChange(function(value){ json.position.x = value; });
+	ob.add(sp, 'objectY').min(-300).max(300).onChange(function(value){ json.position.y = value; });
+	ob.add(sp, 'objectZ').min(-300).max(300).onChange(function(value){ json.position.z = value; });
+	ob.add(sp, 'objectScale').min(0).max(300).onChange(function(value){ json.scale.set(value, value, value); });
+        var sph = gui.addFolder('Sphere');
+	sph.add(sp, 'sphereRotation').min(-180).max(180).onChange(function(value){
+            mesh.rotation.y += (value-lastSphereRotation) * Math.PI/180.0;
+            lastSphereRotation = value;
+        });
+        var op = gui.addFolder('Operation');
+        op.add(sp, 'stop');
+        op.add(sp, 'start');
 
     scene = new THREE.Scene();
   
@@ -97,29 +148,28 @@ function init() {
 
      
     //ライティング
-    light = new THREE.DirectionalLight( 0xffffff, sp.lightIntensity );
+    light = new THREE.DirectionalLight( eval(sp.lightColor.replace('#','0x')), sp.lightIntensity );
     light.position.set(sp.lightX,sp.lightY,sp.lightZ);
 	light.castShadow = sp.lightCastShadow; //影を落とす光にする
 	light.shadowMapWidth = 2048; //影のマッピング細かさ
 	light.shadowMapHeight = 2048; //影のマッピング細かさ
 	light.shadowDarkness = sp.lightShadowDarkness; //影の濃さ
     scene.add( light );
-    light2 = new THREE.DirectionalLight( 0xffffff, sp.light2Intensity );
+    light2 = new THREE.DirectionalLight( eval(sp.light2Color.replace('#','0x')), sp.light2Intensity );
     light2.position.set(sp.light2X,sp.light2Y,sp.light2Z);
 	light2.castShadow = sp.light2CastShadow; //影を落とす光にする
 	light2.shadowMapWidth = 2048; //影のマッピング細かさ
 	light2.shadowMapHeight = 2048; //影のマッピング細かさ
 	light2.shadowDarkness = sp.light2ShadowDarkness; //影の濃さ
 	scene.add( light2 );
-	light3 = new THREE.DirectionalLight( 0xffffff, sp.light3Intensity );
+	light3 = new THREE.DirectionalLight( eval(sp.light3Color.replace('#','0x')), sp.light3Intensity );
     light3.position.set(sp.light3X,sp.light3Y,sp.light3Z);
 	light3.castShadow = sp.light3CastShadow; //影を落とす光にする
 	light3.shadowMapWidth = 2048; //影のマッピング細かさ
 	light3.shadowMapHeight = 2048; //影のマッピング細かさ
 	light3.shadowDarkness = sp.light3ShadowDarkness; //影の濃さ
     scene.add( light3 );
-	ambientLight = new THREE.AmbientLight(0xffffff);
-	ambientLight.color.multiplyScalar(sp.ambientLight);
+	ambientLight = new THREE.AmbientLight( eval(sp.ambientLightColor.replace('#','0x')) );
     scene.add(ambientLight); //環境光
      
     //オブジェクト
@@ -130,8 +180,8 @@ function init() {
         });
         var faceMaterial = new THREE.MeshFaceMaterial( materials );
         json = new THREE.SkinnedMesh( geometry, faceMaterial );
-        json.position.set( 8, -97, -8); //オブジェクトの位置
-		var scale = 28; //オブジェクトの大きさ
+        json.position.set( sp.objectX, sp.objectY, sp.objectZ); //オブジェクトの位置
+		var scale = sp.objectScale; //オブジェクトの大きさ
         json.scale.set( scale, scale, scale );
 		json.overdraw = true;
 		json.castShadow = true; //影を作るオブジェクト対象(castだけでは自身に影はつかない)
@@ -145,7 +195,8 @@ function init() {
 				THREE.AnimationHandler.CATMULLROM);
 			setTimeout(function() {
 			  action.play();
-			  $("#audio").get(0).play();
+                          $audio = $("#audio");
+			  $audio.get(0).play();
 			  animateCurrnetTime = 0;
 			  animate();
 			  }, 300);
@@ -161,11 +212,13 @@ function init() {
       tex = new THREE.ImageUtils.loadTexture(image.src);
 	  tex.minFilter = tex.magFilter = THREE.LinearFilter;
       //モデルを考慮して空間半径を決めないといけない→モデル側を変えるといい。
-      var sphereGeometry = new THREE.SphereGeometry( 100, segmentNumber, segmentNumber);
+      sphereGeometry = new THREE.SphereGeometry( 100, segmentNumber, segmentNumber);
       var matrix = new THREE.Matrix4().makeScale(1, 1, -1);
       sphereGeometry.applyMatrix(matrix);
-      sphereGeometry.applyMatrix(new THREE.Matrix4().makeRotationY(90 * Math.PI/180.0));
-      var mesh = new THREE.Mesh(sphereGeometry , new THREE.MeshBasicMaterial( { map: tex, overdraw: true} ) );
+      lastSphereRotation = sp.sphereRotation;
+      var sphereRotationY = new THREE.Matrix4().makeRotationY((90+sp.sphereRotation) * Math.PI/180.0);
+      sphereGeometry.applyMatrix(sphereRotationY);
+      mesh = new THREE.Mesh(sphereGeometry , new THREE.MeshBasicMaterial( { map: tex, overdraw: true} ) );
 	  mesh.receiveShadow = true; //影を受けるオブジェクト対象(receiveだけでは自身は影を作らない)
       scene.add( mesh );
     });
