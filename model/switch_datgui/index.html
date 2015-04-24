@@ -108,11 +108,11 @@ var sp;
 function init() {
         var lssp = localStorage.getItem(window.location.href+':params');
 	// 各種パラメータ変更GUI
-      //  if (lssp) {
-      //    sp = JSON.parse(lssp);
-      //  } else {
+        if (lssp) {
+          sp = JSON.parse(lssp);
+        } else {
           sp = new SceneParams();
-      //  }
+        }
         mt = new Methods();
 	var gui = new dat.GUI();
 	var cp = gui.addFolder('Camera');
