@@ -66,6 +66,8 @@ var SceneParams = function() {
   this.objectScale = 28.0;
   // Sphere
   this.sphereRotation = 0;
+};
+var Methods = function () {
   // Operation
   this.stop = function () {
     action.stop();
@@ -79,16 +81,35 @@ var SceneParams = function() {
     action.play();
     $audio.get(0).play();
   };
-};
+  // LocalStorage
+  this.reset_and_reload = function() {
+    localStorage.removeItem(window.location.href);
+    location.reload();
+  };
+  this.save = function () {
+    var lssp = JSON.stringify(sp);
+    localStorage.setItem(window.location.href+':params', lssp);
+  };
+  this.save_and_reload = function () {
+    var lssp = JSON.stringify(sp);
+    localStorage.setItem(window.location.href+':params', lssp);
+    location.reload();
+  };
+}
 
 var camZ = 0;
 var camZ_max = 1000;
 var camZ_min = 100;
 var segmentNumber = 60;
 function init() {
-
+        var lssp = localStorage.getItem(window.location.href+':params');
 	// 各種パラメータ変更GUI
-	var sp = new SceneParams();
+        if (lssp) {
+          sp = JSON.parse(lssp);
+        } else {
+          sp = new SceneParams();
+        }
+        mt = new Methods();
 	var gui = new dat.GUI();
 	var cp = gui.addFolder('Camera');
 	cp.add(sp, 'cameraFov').min(0).max(180).onChange(function(value){ camera.fov = value; camera.updateProjectionMatrix(); });
@@ -144,8 +165,12 @@ function init() {
             lastSphereRotation = value;
         });
         var op = gui.addFolder('Operation');
-        op.add(sp, 'stop');
-        op.add(sp, 'start');
+        op.add(mt, 'stop');
+        op.add(mt, 'start');
+        var ls = gui.addFolder('Local Storage');
+        ls.add(mt, 'reset_and_reload');
+        ls.add(mt, 'save');
+        ls.add(mt, 'save_and_reload');
 
     scene = new THREE.Scene();
   
