@@ -170,7 +170,7 @@ function init() {
             lastSphereRotation = value;
         });
         var mdl = gui.addFolder('Model');
-        mdl.add(sp, 'modelName', ['miku','raou'] ).onChange(function(value){
+        mdl.add(sp, 'modelName', ['miku','raou','rin'] ).onChange(function(value){
                                                             action.stop();
                                                             animateCurrnetTime = 0;
                                                             $audio.get(0).pause();
