@@ -294,10 +294,8 @@ function handleFileSelect(evt) {
     var file = evt.originalEvent.dataTransfer.files[0];
     var reader = new FileReader();
    
-    $("#dd").text("Drag & Drop Here!\n"+escape(file.name)+"\n"+file.type+"\n"+file.size+"\n"+file.lastModifiedDate);
-    
     if(!file.type.match('image.*')){
-        alert("画像ファイルではない");
+        alert("画像ファイルではありません！");
         return;
     }
     
