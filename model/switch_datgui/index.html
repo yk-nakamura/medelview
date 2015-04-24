@@ -4,6 +4,19 @@
 		html, body { height:100%; overflow:hidden; }
 		body { margin:0; }
 		#snapshot { position: absolute; top: 0px; left: 0px; }
+		#dd { 
+			height: 30px;
+			width: 75px;
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			border: 1px dashed;
+			border-radius: 5px;
+			text-align: center;
+			color: #404040;
+			background-color: rgba(255, 255, 255, 0.3);
+			font: 11px "Lucida Grande", sans-serif;
+		}
 	</style>
 <body>
 <script src="jquery.min.js"></script>
@@ -73,6 +86,7 @@ var camZ_max = 1000;
 var camZ_min = 100;
 var segmentNumber = 60;
 function init() {
+
 	// 各種パラメータ変更GUI
 	var sp = new SceneParams();
 	var gui = new dat.GUI();
@@ -204,7 +218,7 @@ function init() {
 		}
 		
 		
-    });
+    })
 
 	//背景
     loader2 = new THREE.ImageLoader();
@@ -247,8 +261,39 @@ function animate() {
 		document.getElementById("audio").currentTime = 0;
 	}
 }
-</script>
 
+function handleFileSelect(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+
+    var file = evt.originalEvent.dataTransfer.files[0];
+    var reader = new FileReader();
+   
+    $("#dd").text("Drag & Drop Here!\n"+escape(file.name)+"\n"+file.type+"\n"+file.size+"\n"+file.lastModifiedDate);
+    
+    if(!file.type.match('image.*')){
+        alert("画像ファイルではない");
+        return;
+    }
+    
+    reader.onload = function(evt) {
+        var tex2 = new THREE.ImageUtils.loadTexture(evt.target.result);
+        mesh.material.map = tex2;
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function handleDragOver(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+}
+
+$(document).ready(function(){
+  $("#dd").on("dragover", handleDragOver).on("drop", handleFileSelect);
+});
+</script>
+<div id="dd">Drag & Drop Here!</div>
 <audio id="audio" src="gobas.m4a"></audio>
 </body>
 </html>
