@@ -66,6 +66,7 @@ var SceneParams = function() {
   this.objectScale = 28.0;
   // Sphere
   this.sphereRotation = 0;
+  this.sphereData = null;
   // Model
   this.modelName = 'miku';
 };
@@ -85,7 +86,7 @@ var Methods = function () {
   };
   // LocalStorage
   this.reset_and_reload = function() {
-    localStorage.removeItem(window.location.href);
+    localStorage.removeItem(window.location.href+':params');
     location.reload();
   };
   this.save = function () {
@@ -230,9 +231,11 @@ function init() {
     loader.load( sp.modelName + '.json', updateModel);
     
 	//背景
-    loader2 = new THREE.ImageLoader();
-    loader2.load( 'miyajimakyo.jpg', function (image) {
-      tex = new THREE.ImageUtils.loadTexture(image.src);
+      if (sp.sphereData) {
+        tex = new THREE.ImageUtils.loadTexture(sp.sphereData);
+      } else {
+        tex = new THREE.ImageUtils.loadTexture('miyajimakyo.jpg');
+      }
 	  tex.minFilter = tex.magFilter = THREE.LinearFilter;
       //モデルを考慮して空間半径を決めないといけない→モデル側を変えるといい。
       sphereGeometry = new THREE.SphereGeometry( 100, segmentNumber, segmentNumber);
@@ -244,7 +247,6 @@ function init() {
       mesh = new THREE.Mesh(sphereGeometry , new THREE.MeshBasicMaterial( { map: tex, overdraw: true} ) );
 	  mesh.receiveShadow = true; //影を受けるオブジェクト対象(receiveだけでは自身は影を作らない)
       scene.add( mesh );
-    });
 
     //レンダラー
     renderer = new THREE.WebGLRenderer();//THREE.CanvasRenderer();でもいいけどポリゴンの裏が非表示？
@@ -321,6 +323,7 @@ function handleFileSelect(evt) {
     }
     
     reader.onload = function(evt) {
+        sp.sphereData = evt.target.result;
         var tex2 = new THREE.ImageUtils.loadTexture(evt.target.result);
         mesh.material.map = tex2;
     };
