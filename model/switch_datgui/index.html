@@ -66,6 +66,8 @@ var SceneParams = function() {
   this.objectScale = 28.0;
   // Sphere
   this.sphereRotation = 0;
+  // Model
+  this.modelName = 'miku';
 };
 var Methods = function () {
   // Operation
@@ -97,18 +99,20 @@ var Methods = function () {
   };
 }
 
+
 var camZ = 0;
 var camZ_max = 1000;
 var camZ_min = 100;
 var segmentNumber = 60;
+var sp;
 function init() {
         var lssp = localStorage.getItem(window.location.href+':params');
 	// 各種パラメータ変更GUI
-        if (lssp) {
-          sp = JSON.parse(lssp);
-        } else {
+      //  if (lssp) {
+      //    sp = JSON.parse(lssp);
+      //  } else {
           sp = new SceneParams();
-        }
+      //  }
         mt = new Methods();
 	var gui = new dat.GUI();
 	var cp = gui.addFolder('Camera');
@@ -164,6 +168,15 @@ function init() {
             mesh.rotation.y += (value-lastSphereRotation) * Math.PI/180.0;
             lastSphereRotation = value;
         });
+        var mdl = gui.addFolder('Model');
+        mdl.add(sp, 'modelName', ['miku','raou'] ).onChange(function(value){
+                                                            action.stop();
+                                                            animateCurrnetTime = 0;
+                                                            $audio.get(0).pause();
+                                            loader = new THREE.JSONLoader();
+                                            loader.load(value+".json", updateModel);
+                                       });
+
         var op = gui.addFolder('Operation');
         op.add(mt, 'stop');
         op.add(mt, 'start');
@@ -213,38 +226,9 @@ function init() {
      
     //オブジェクト
     loader = new THREE.JSONLoader();
-    loader.load( 'miku.json', function ( geometry, materials ) { //第１引数はジオメトリー、第２引数はマテリアルが自動的に取得）
-	    materials.forEach(function(mat) {
-            mat.skinning = true;
-        });
-        var faceMaterial = new THREE.MeshFaceMaterial( materials );
-        json = new THREE.SkinnedMesh( geometry, faceMaterial );
-        json.position.set( sp.objectX, sp.objectY, sp.objectZ); //オブジェクトの位置
-		var scale = sp.objectScale; //オブジェクトの大きさ
-        json.scale.set( scale, scale, scale );
-		json.overdraw = true;
-		json.castShadow = true; //影を作るオブジェクト対象(castだけでは自身に影はつかない)
-		scene.add( json );
-
-		//アニメーション
-        if (json.geometry.animations) {
-		    THREE.AnimationHandler.add( json.geometry.animations[ 0 ] );
-		    action = new THREE.Animation(json,
-			    json.geometry.animations[ 0 ].name,
-				THREE.AnimationHandler.CATMULLROM);
-			setTimeout(function() {
-			  action.play();
-                          $audio = $("#audio");
-			  $audio.get(0).play();
-			  animateCurrnetTime = 0;
-			  animate();
-			  }, 300);
-			animation_length = json.geometry.animations[ 0 ].length;
-		}
-		
-		
-    })
-
+    loader.load( sp.modelName + '.json', updateModel);
+    //loader.load('miku.json', updateModel);
+    
 	//背景
     loader2 = new THREE.ImageLoader();
     loader2.load( 'miyajimakyo.jpg', function (image) {
@@ -272,6 +256,44 @@ function init() {
     control = new THREE.OrbitControls( camera, renderer.domElement ); // 表示領域をコントロール
     control.noPan = true; // 右ドラッグ(平行視点移動禁止)
 }
+
+var json_model;
+function updateModel ( geometry, materials ) { //第１引数はジオメトリー、第２引数はマテリアルが自動的に取得）
+    
+    if (json_model != null){
+        scene.remove( json_model );
+        json_model.geometry.dispose();
+    }
+    
+    materials.forEach(function(mat) {
+        mat.skinning = true;
+    });
+    var faceMaterial = new THREE.MeshFaceMaterial( materials );
+    json_model = new THREE.SkinnedMesh( geometry, faceMaterial );
+    json_model.position.set( sp.objectX, sp.objectY, sp.objectZ); //オブジェクトの位置
+    var scale = sp.objectScale; //オブジェクトの大きさ
+    json_model.scale.set( scale, scale, scale );
+    json_model.overdraw = true;
+    json_model.castShadow = true; //影を作るオブジェクト対象(castだけでは自身に影はつかない)
+    scene.add( json_model );
+                      
+    //アニメーション
+    if (json_model.geometry.animations) {
+        THREE.AnimationHandler.add( json_model.geometry.animations[ 0 ] );
+        action = new THREE.Animation(json_model,
+                        json_model.geometry.animations[ 0 ].name,
+                        THREE.AnimationHandler.CATMULLROM);
+                        setTimeout(function() {
+                            action.play();
+                            $audio = $("#audio");
+                            $audio.get(0).play();
+                            animateCurrnetTime = 0;
+                            animate();
+                        }, 300);
+                        animation_length = json_model.geometry.animations[ 0 ].length;
+    }
+}
+
 
 var animateCurrnetTime = 0;
 function animate() {
