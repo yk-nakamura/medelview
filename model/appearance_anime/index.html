@@ -1,0 +1,118 @@
+<html>
+<meta charset="utf-8">
+	<style>
+		html, body { height:100%; overflow:hidden; }
+		body { margin:0; }
+		#snapshot { position: absolute; top: 0px; left: 0px; }
+	</style>
+<body>
+<script src="jquery.min.js"></script>
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+
+init();
+
+var camZ = 0;
+var camZ_max = 1000;
+var camZ_min = 100;
+var segmentNumber = 60;
+function init() {
+    scene = new THREE.Scene();
+  
+    clock = new THREE.Clock();
+	var width = $(window).width();
+    var height = $(window).height();
+
+    // カメラ
+    camera = new THREE.PerspectiveCamera( 75, width / height);
+    camera.position.z = 100;
+    scene.add( camera );
+
+     
+    //ライティング
+    var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.75 ); //平行光源（色、強度）
+    directionalLight.position.set(0,0,-300);
+    scene.add( directionalLight );
+    directionalLight = new THREE.DirectionalLight( 0xffffff, 0.25 ); //逆からの光も少し
+    directionalLight.position.set(0,0,300);
+	scene.add( directionalLight );
+	directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 ); //影落とし用
+    directionalLight.position.set(0,200,-300);
+	directionalLight.castShadow = true;
+	directionalLight.shadowMapWidth = 2048;
+	directionalLight.shadowMapHeight = 2048;
+    scene.add( directionalLight );
+    scene.add(new THREE.AmbientLight(0xaaaaaa)); //環境光
+     
+    //オブジェクト
+    loader = new THREE.JSONLoader();
+    loader.load( 'miku.json', function ( geometry, materials ) { //第１引数はジオメトリー、第２引数はマテリアルが自動的に取得）
+	    materials.forEach(function(mat) {
+            mat.skinning = true;
+        });
+        var faceMaterial = new THREE.MeshFaceMaterial( materials );
+        json = new THREE.SkinnedMesh( geometry, faceMaterial );
+        json.position.set( 0, -95, 0);
+        json.scale.set( 27, 27, 27 );
+		json.overdraw = true;
+		json.castShadow = true;
+		scene.add( json );
+
+        if (json.geometry.animation.name) {
+		    THREE.AnimationHandler.add( json.geometry.animation );
+		    action = new THREE.Animation(json,
+			    json.geometry.animation.name,
+				THREE.AnimationHandler.CATMULLROM);
+			setTimeout(function() {
+			  action.play();
+			  animateCurrnetTime = 0;
+			  animate();
+			  }, 300);
+			animation_length = json.geometry.animation.length;
+		}
+		
+		
+    });
+    loader2 = new THREE.ImageLoader();
+    loader2.load( 'forest.jpg', function (image) {
+      tex = new THREE.ImageUtils.loadTexture(image.src);
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      //球体半径は固定でモデル側でサイズを調整する。
+      var sphereGeometry = new THREE.SphereGeometry( 100, segmentNumber, segmentNumber);
+      var matrix = new THREE.Matrix4().makeScale(1, 1, -1);
+      sphereGeometry.applyMatrix(matrix);
+      sphereGeometry.applyMatrix(new THREE.Matrix4().makeRotationY(90 * Math.PI/180.0));
+      var mesh = new THREE.Mesh(sphereGeometry , new THREE.MeshBasicMaterial( { map: tex, overdraw: true} ) );
+	  mesh.receiveShadow = true;
+      scene.add( mesh );
+    });
+
+    //レンダラー
+    renderer = new THREE.WebGLRenderer();//THREE.CanvasRenderer();でもいいけどポリゴンの裏が非表示？
+    renderer.setSize( width, height );
+	renderer.shadowMapEnabled = true;
+    document.body.appendChild( renderer.domElement );
+  
+    //マウスコントローラ
+    control = new THREE.OrbitControls( camera, renderer.domElement ); // 表示領域をコントロール
+    control.noPan = true; // 右ドラッグ(平行視点移動禁止)
+}
+
+var animateCurrnetTime = 0;
+function animate() {
+    requestAnimationFrame( animate );
+	var delta = clock.getDelta();
+	animateCurrnetTime += delta;
+	THREE.AnimationHandler.update(delta);
+    renderer.render( scene, camera );
+    control.update();   //これ追加
+		
+	if (animateCurrnetTime >= animation_length) {
+		animateCurrnetTime = 0;
+	}
+}
+</script>
+</body>
+</html>
