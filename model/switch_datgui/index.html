@@ -105,6 +105,7 @@ var camZ_max = 1000;
 var camZ_min = 100;
 var segmentNumber = 60;
 var sp;
+var json_model;
 function init() {
         var lssp = localStorage.getItem(window.location.href+':params');
 	// 各種パラメータ変更GUI
@@ -159,10 +160,10 @@ function init() {
             ambientLight.color.setHex(value);
         });
         var ob = gui.addFolder('Object');
-	ob.add(sp, 'objectX').min(-300).max(300).onChange(function(value){ json.position.x = value; });
-	ob.add(sp, 'objectY').min(-300).max(300).onChange(function(value){ json.position.y = value; });
-	ob.add(sp, 'objectZ').min(-300).max(300).onChange(function(value){ json.position.z = value; });
-	ob.add(sp, 'objectScale').min(0).max(300).onChange(function(value){ json.scale.set(value, value, value); });
+	ob.add(sp, 'objectX').min(-300).max(300).onChange(function(value){ json_model.position.x = value; });
+	ob.add(sp, 'objectY').min(-300).max(300).onChange(function(value){ json_model.position.y = value; });
+	ob.add(sp, 'objectZ').min(-300).max(300).onChange(function(value){ json_model.position.z = value; });
+	ob.add(sp, 'objectScale').min(0).max(300).onChange(function(value){ json_model.scale.set(value, value, value); });
         var sph = gui.addFolder('Sphere');
 	sph.add(sp, 'sphereRotation').min(-180).max(180).onChange(function(value){
             mesh.rotation.y += (value-lastSphereRotation) * Math.PI/180.0;
@@ -227,7 +228,6 @@ function init() {
     //オブジェクト
     loader = new THREE.JSONLoader();
     loader.load( sp.modelName + '.json', updateModel);
-    //loader.load('miku.json', updateModel);
     
 	//背景
     loader2 = new THREE.ImageLoader();
@@ -257,7 +257,6 @@ function init() {
     control.noPan = true; // 右ドラッグ(平行視点移動禁止)
 }
 
-var json_model;
 function updateModel ( geometry, materials ) { //第１引数はジオメトリー、第２引数はマテリアルが自動的に取得）
     
     if (json_model != null){
