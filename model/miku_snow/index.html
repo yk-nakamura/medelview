@@ -60,10 +60,13 @@ var SceneParams = function() {
   // AmbientLight
   this.ambientLightColor = "#aaaaaa";
   // Object
-	this.objectX = 8.0;
+  this.objectShow = true;
+  this.objectX = 8.0;
   this.objectY = -194.0;
   this.objectZ = -8.0;
   this.objectScale = 56.0;
+  // Effect
+  this.effectEnable = true;
   // Sphere
   this.sphereRotation = 0;
   this.sphereData = null;
@@ -165,10 +168,27 @@ function init() {
             ambientLight.color.setHex(value);
         });
         var ob = gui.addFolder('Object');
+        ob.add(sp, 'objectShow').onChange(function(value) {
+          if (value) {
+            scene.add( json_model );
+            action.stop();
+            animateCurrnetTime = 0;
+            $audio.get(0).load();
+            action.play();
+            $audio.get(0).play();
+          } else {
+            action.stop();
+            animateCurrnetTime = 0;
+            $audio.get(0).pause();
+            scene.remove( json_model );
+          }
+        });
 	ob.add(sp, 'objectX').min(-300).max(300).onChange(function(value){ json_model.position.x = value; });
 	ob.add(sp, 'objectY').min(-300).max(300).onChange(function(value){ json_model.position.y = value; });
 	ob.add(sp, 'objectZ').min(-300).max(300).onChange(function(value){ json_model.position.z = value; });
 	ob.add(sp, 'objectScale').min(0).max(300).onChange(function(value){ json_model.scale.set(value, value, value); });
+        var ef = gui.addFolder('Effect');
+        ef.add(sp, 'effectEnable').onChange(function(value) { value ? scene.add(pointCloud) : scene.remove(pointCloud); });
         var sph = gui.addFolder('Sphere');
 	sph.add(sp, 'sphereRotation').min(-180).max(180).onChange(function(value){
             mesh.rotation.y += (value-lastSphereRotation) * Math.PI/180.0;
@@ -285,7 +305,7 @@ function init() {
 		  // パーティクルの深さを毎フレームソート
 		  pointCloud.sortParticles = true;
 
-		  scene.add( pointCloud );
+		  if (sp.effectEnable) { scene.add( pointCloud ); }
 
 
     //レンダラー
@@ -316,7 +336,7 @@ function updateModel ( geometry, materials ) { //第１引数はジオメトリ�
     json_model.scale.set( scale, scale, scale );
     json_model.overdraw = true;
     json_model.castShadow = true; //影を作るオブジェクト対象(castだけでは自身に影はつかない)
-    scene.add( json_model );
+    if (sp.objectShow) { scene.add( json_model ); }
 
     //アニメーション
     if (json_model.geometry.animations) {
@@ -325,9 +345,9 @@ function updateModel ( geometry, materials ) { //第１引数はジオメトリ�
                         json_model.geometry.animations[ 0 ].name,
                         THREE.AnimationHandler.CATMULLROM);
                         setTimeout(function() {
-                            action.play();
+                            if (sp.objectShow) { action.play(); }
                             $audio = $("#audio");
-                            $audio.get(0).play();
+                            if (sp.objectShow) { $audio.get(0).play(); }
                             animateCurrnetTime = 0;
                             animate();
                         }, 300);
@@ -364,10 +384,12 @@ function animate() {
 	THREE.AnimationHandler.update(delta);
     renderer.render( scene, camera );
     control.update();   //これ追加
+    if (sp.objectShow) {
 	if (animateCurrnetTime >= animation_length) {
 		animateCurrnetTime = 0;
 		document.getElementById("audio").currentTime = 0;
 	}
+    }
 }
 
 function handleFileSelect(evt) {
