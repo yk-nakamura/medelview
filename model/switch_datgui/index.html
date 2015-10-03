@@ -4,7 +4,7 @@
 		html, body { height:100%; overflow:hidden; }
 		body { margin:0; }
 		#snapshot { position: absolute; top: 0px; left: 0px; }
-		#dd { 
+		#dd {
 			height: 30px;
 			width: 75px;
 			position: absolute;
@@ -188,7 +188,7 @@ function init() {
         ls.add(mt, 'save_and_reload');
 
     scene = new THREE.Scene();
-  
+
     clock = new THREE.Clock();
 	var width = $(window).width();
     var height = $(window).height();
@@ -200,7 +200,7 @@ function init() {
     camera.position.z = sp.cameraZ;
     scene.add( camera );
 
-     
+
     //ライティング
     light = new THREE.DirectionalLight( eval(sp.lightColor.replace('#','0x')), sp.lightIntensity );
     light.position.set(sp.lightX,sp.lightY,sp.lightZ);
@@ -225,11 +225,11 @@ function init() {
     scene.add( light3 );
 	ambientLight = new THREE.AmbientLight( eval(sp.ambientLightColor.replace('#','0x')) );
     scene.add(ambientLight); //環境光
-     
+
     //オブジェクト
     loader = new THREE.JSONLoader();
     loader.load( sp.modelName + '.json', updateModel);
-    
+
 	//背景
       if (sp.sphereData) {
         tex = new THREE.ImageUtils.loadTexture(sp.sphereData);
@@ -253,21 +253,22 @@ function init() {
     renderer.setSize( width, height );
 	renderer.shadowMapEnabled = true;
     document.body.appendChild( renderer.domElement );
-  
+
     //マウスコントローラ
     control = new THREE.OrbitControls( camera, renderer.domElement ); // 表示領域をコントロール
     control.noPan = true; // 右ドラッグ(平行視点移動禁止)
 }
 
 function updateModel ( geometry, materials ) { //第１引数はジオメトリー、第２引数はマテリアルが自動的に取得）
-    
+
     if (json_model != null){
         scene.remove( json_model );
         json_model.geometry.dispose();
     }
-    
+
     materials.forEach(function(mat) {
         mat.skinning = true;
+				mat.side = THREE.DoubleSide;
     });
     var faceMaterial = new THREE.MeshFaceMaterial( materials );
     json_model = new THREE.SkinnedMesh( geometry, faceMaterial );
@@ -277,7 +278,7 @@ function updateModel ( geometry, materials ) { //第１引数はジオメトリ�
     json_model.overdraw = true;
     json_model.castShadow = true; //影を作るオブジェクト対象(castだけでは自身に影はつかない)
     scene.add( json_model );
-                      
+
     //アニメーション
     if (json_model.geometry.animations) {
         THREE.AnimationHandler.add( json_model.geometry.animations[ 0 ] );
@@ -316,18 +317,18 @@ function handleFileSelect(evt) {
 
     var file = evt.originalEvent.dataTransfer.files[0];
     var reader = new FileReader();
-   
+
     if(!file.type.match('image.*')){
         alert("画像ファイルではありません！");
         return;
     }
-    
+
     reader.onload = function(evt) {
         sp.sphereData = evt.target.result;
         var tex2 = new THREE.ImageUtils.loadTexture(evt.target.result);
         mesh.material.map = tex2;
     };
-    
+
     reader.readAsDataURL(file);
 }
 

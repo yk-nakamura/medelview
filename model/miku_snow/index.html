@@ -328,6 +328,7 @@ function updateModel ( geometry, materials ) { //第１引数はジオメトリ�
 
     materials.forEach(function(mat) {
         mat.skinning = true;
+				mat.side = THREE.DoubleSide;
     });
     var faceMaterial = new THREE.MeshFaceMaterial( materials );
     json_model = new THREE.SkinnedMesh( geometry, faceMaterial );
