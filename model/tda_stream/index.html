@@ -70,14 +70,10 @@ function init() {
         navigator.getMedia({"video": true, "audio":true}, function(stream){
 	  video.src = URL.createObjectURL(stream);
           window.localStream = stream;
-	  //video.load();
 	  video.play();
 	  videoImage = document.createElement('canvas');
-	  videoImage.width = 1280;
-	  videoImage.height = 638;
           videoImageContext = videoImage.getContext('2d');
           videoImageContext.fillStyle = '#000000';
-          videoImageContext.fillRect(0, 0, 1280, 720);
           tex = new THREE.Texture(videoImage);
 	  tex.minFilter = tex.magFilter = THREE.LinearFilter;
           //モデルを考慮して空間半径を決めないといけない→モデル側を変えるといい。
@@ -123,6 +119,7 @@ function init() {
     control.noPan = true; // 右ドラッグ(平行視点移動禁止)
 }
 
+var isVideoInitialized = false;
 var animateCurrnetTime = 0;
 function animate() {
     requestAnimationFrame( animate );
@@ -133,6 +130,16 @@ function animate() {
     control.update();   //これ追加
 	if (video.readyState === video.HAVE_ENOUGH_DATA) {
 	video.play();
+          if (!isVideoInitialized) {
+            var width = video.videoWidth;
+            var height = video.videoHeight;
+            var equi_height = width/2 - 2;
+	    videoImage.width = width;
+	    videoImage.height = equi_height;
+            videoImageContext = videoImage.getContext('2d');
+            videoImageContext.fillRect(0, 0, width, height);
+            isVideoInitialized = true;
+          }
         videoImageContext.drawImage(video, 0, 0);
         tex.needsUpdate = true;
     }
