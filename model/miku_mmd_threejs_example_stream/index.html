@@ -24,31 +24,31 @@ var SceneParams = function() {
   this.cameraY = 20;
   this.cameraZ = 80;
   // Light
-  this.lightIntensity = 0.7;
+  this.lightIntensity = 0;
   this.lightX = 100;
   this.lightY = 100;
   this.lightZ = -100;
-  this.lightColor = "#00ace1";
-  this.lightCastShadow = true;
+  this.lightColor = "#ffffff";
+  this.lightCastShadow = false;
   this.lightShadowDarkness = 0.1;
   // Light2
-  this.light2Intensity = 0.7;
+  this.light2Intensity = 0.2;
   this.light2X = -100;
   this.light2Y = 100;
   this.light2Z = -100;
-  this.light2Color = "#00ace1";
-  this.light2CastShadow = true;
+  this.light2Color = "#ffffff";
+  this.light2CastShadow = false;
   this.light2ShadowDarkness = 0.1;
   // Light3
   this.light3Intensity = 0.5;
   this.light3X = -5;
   this.light3Y = 150;
   this.light3Z = 200;
-  this.light3Color = "#ffe8be";
+  this.light3Color = "#ffffff";
   this.light3CastShadow = true;
-  this.light3ShadowDarkness = 0.2;
+  this.light3ShadowDarkness = 0.4;
   // AmbientLight
-  this.ambientLightColor = "#003e52";
+  this.ambientLightColor = "#333333";
   // Object
   this.objectX = 8.0;
   this.objectY = -93.0;
@@ -184,28 +184,23 @@ function init() {
 		json.castShadow = true; //影を作るオブジェクト対象(castだけでは自身に影はつかない)
 		scene.add( json );
 
-		//アニメーション
-        if (json.geometry.animations) {
-                    action = new THREE.AnimationMixer( json );
-		    action.addAction( new THREE.AnimationAction(json.geometry.animations[ 0 ]) );
-		    action.addAction( new THREE.AnimationAction(json.geometry.morphAnimations[ 0 ]) );
-			setTimeout(function() {
-                          $audio = $("#audio");
-			  $audio.get(0).play();
-                          animation_length = $audio.get(0).duration;
-			  animateCurrnetTime = 0;
-			  animate();
-			  }, 300);
-                    ikSolver = new THREE.CCDIKSolver( json );
-		}
 		
 		
-    });
 
 	//背景
-    loader2 = new THREE.ImageLoader();
-    loader2.load( 'equirectangular.jpg', function (image) {
-      tex = new THREE.ImageUtils.loadTexture(image.src);
+  navigator.getMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+  video = document.createElement('video');
+  navigator.getMedia({"video": true, "audio":true}, function(stream){
+          video.src = URL.createObjectURL(stream);
+          window.localStream = stream;
+          video.play();
+          videoImage = document.createElement('canvas');
+          videoImageContext = videoImage.getContext('2d');
+          videoImageContext.fillStyle = '#000000';
+          tex = new THREE.Texture(videoImage);
 	  tex.minFilter = tex.magFilter = THREE.LinearFilter;
       //モデルを考慮して空間半径を決めないといけない→モデル側を変えるといい。
       sphereGeometry = new THREE.SphereGeometry( 100, segmentNumber, segmentNumber);
@@ -217,7 +212,6 @@ function init() {
       mesh = new THREE.Mesh(sphereGeometry , new THREE.MeshBasicMaterial( { map: tex, overdraw: true} ) );
 	  mesh.receiveShadow = true; //影を受けるオブジェクト対象(receiveだけでは自身は影を作らない)
       scene.add( mesh );
-    });
 
     //レンダラー
     renderer = new THREE.WebGLRenderer();//THREE.CanvasRenderer();でもいいけどポリゴンの裏が非表示？
@@ -228,8 +222,30 @@ function init() {
     //マウスコントローラ
     control = new THREE.OrbitControls( camera, renderer.domElement ); // 表示領域をコントロール
     control.noPan = true; // 右ドラッグ(平行視点移動禁止)
+
+		//アニメーション
+        if (json.geometry.animations) {
+                    action = new THREE.AnimationMixer( json );
+		    action.addAction( new THREE.AnimationAction(json.geometry.animations[ 0 ]) );
+		    action.addAction( new THREE.AnimationAction(json.geometry.morphAnimations[ 0 ]) );
+			setTimeout(function() {
+                          $audio = $("#audio");
+			  $audio.get(0).play();
+			  animation_length = $audio.get(0).duration;
+			  animateCurrnetTime = 0;
+			  animate();
+			  }, 300);
+                    ikSolver = new THREE.CCDIKSolver( json );
+		}
+  }, function(error) {
+          console.log("The following error occured: " + error);
+  });
+
+    });
 }
 
+
+var isVideoInitialized = false;
 var animateCurrnetTime = 0;
 function animate() {
     requestAnimationFrame( animate );
@@ -238,6 +254,23 @@ function animate() {
 	action.update(delta);
         ikSolver.update();
     renderer.render( scene, camera );
+
+       if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        video.play();
+          if (!isVideoInitialized) {
+            var width = video.videoWidth;
+            var height = video.videoHeight;
+            var equi_height = width/2 - 2;
+            videoImage.width = width;
+            videoImage.height = equi_height;
+            videoImageContext = videoImage.getContext('2d');
+            videoImageContext.fillRect(0, 0, width, height);
+            isVideoInitialized = true;
+          }
+        videoImageContext.drawImage(video, 0, 0);
+        tex.needsUpdate = true;
+      }
+
     control.update();   //これ追加
 	if (animateCurrnetTime >= animation_length) {
 		animateCurrnetTime = 0;
