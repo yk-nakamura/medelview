@@ -128,7 +128,7 @@ function animate() {
 	THREE.AnimationHandler.update(delta);
     renderer.render( scene, camera );
     control.update();   //これ追加
-	if (video.readyState === video.HAVE_ENOUGH_DATA) {
+	if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth >= 1280) {
 	video.play();
           if (!isVideoInitialized) {
             var width = video.videoWidth;
