@@ -50,10 +50,10 @@ var SceneParams = function() {
   // AmbientLight
   this.ambientLightColor = "#333333";
   // Object
-  this.objectX = 8.0;
-  this.objectY = -93.0;
-  this.objectZ = -8.0;
-  this.objectScale = 6.0;
+  this.objectX = 3.0;
+  this.objectY = -94.0;
+  this.objectZ = 0.0;
+  this.objectScale = 5.7;
   // Sphere
   this.sphereRotation = 0;
   // Operation
@@ -192,8 +192,11 @@ function init() {
                        navigator.webkitGetUserMedia ||
                        navigator.mozGetUserMedia ||
                        navigator.msGetUserMedia);
+  var is_ff = navigator.mozGetUserMedia;
   video = document.createElement('video');
-  navigator.getMedia({"video": true, "audio":true}, function(stream){
+  var camera_size = location.search.substring(1);
+  var camera_height = camera_size.length > 0 ? parseInt(camera_size) : 1080;
+  navigator.getMedia( {"video": is_ff ? { height: { ideal: camera_height } } : {mandatory: { minHeight: camera_height }}, "audio":true}, function(stream){
           video.src = URL.createObjectURL(stream);
           window.localStream = stream;
           video.play();
@@ -231,10 +234,12 @@ function init() {
 			setTimeout(function() {
                           $audio = $("#audio");
 			  $audio.get(0).play();
-			  animation_length = $audio.get(0).duration;
-			  animateCurrnetTime = 0;
-			  animate();
-			  }, 300);
+                          $audio.on("playing",function() {
+			    animation_length = $audio.get(0).duration;
+			    animateCurrnetTime = 0;
+			    animate();
+			  });
+			}, 300);
                     ikSolver = new THREE.CCDIKSolver( json );
 		}
   }, function(error) {
@@ -255,11 +260,12 @@ function animate() {
         ikSolver.update();
     renderer.render( scene, camera );
 
-       if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth >= 1280) {
+       if (video.readyState === video.HAVE_ENOUGH_DATA)  {
         video.play();
           if (!isVideoInitialized) {
             var width = video.videoWidth;
             var height = video.videoHeight;
+            console.log("video-width: " + width + ", video-height: " + height);
             var equi_height = width/2 - 2;
             videoImage.width = width;
             videoImage.height = equi_height;
