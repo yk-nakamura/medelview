@@ -9,6 +9,7 @@
 <script src="jquery.min.js"></script>
 <script src="three.min.js"></script>
 <script src="OrbitControls.js"></script>
+<script src="../neru/TrackballControls.js"></script>
 <script>
 
 init();
@@ -30,6 +31,7 @@ function init() {
 	camera.position.y = 15;
     camera.position.z = 100;
     scene.add( camera );
+    trackball = new THREE.TrackballControls( camera );//カメラぐりぐりしたいならこれと・・・
 
     //ライティング
     var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 ); //照明1
@@ -74,8 +76,8 @@ function init() {
 			    json.geometry.animations[ 0 ].name,
 				THREE.AnimationHandler.CATMULLROM);
 			setTimeout(function() {
-			  action.play();
 			  $("#audio").get(0).play();
+			  action.play();
 			  animateCurrnetTime = 0;
 			  animate();
 			  }, 300);
@@ -115,13 +117,14 @@ function animate() {
     requestAnimationFrame( animate );
 	var delta = clock.getDelta();
 	animateCurrnetTime += delta;
-	THREE.AnimationHandler.update(delta);
-    renderer.render( scene, camera );
-    trackball.update();   //これ追加
 	if (animateCurrnetTime >= animation_length) {
 		animateCurrnetTime = 0;
 		document.getElementById("audio").currentTime = 0;
-	}}
+	}
+	THREE.AnimationHandler.update(delta);
+    renderer.render( scene, camera );
+    trackball.update();   //これ追加
+}
 </script>
 <audio id="audio" src="yokai.m4a"></audio>
 </body>
